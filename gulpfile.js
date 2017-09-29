@@ -11,9 +11,10 @@ var gulp           = require('gulp'),
 		cache          = require('gulp-cache'),
 		autoprefixer   = require('gulp-autoprefixer'),
 		ftp            = require('vinyl-ftp'),
-		notify         = require("gulp-notify");
+		notify         = require("gulp-notify"),
+		rsync          = require('gulp-rsync');
 
-// Скрипты проекта
+// Пользовательские скрипты проекта
 
 gulp.task('common-js', function() {
 	return gulp.src([
@@ -48,10 +49,10 @@ gulp.task('browser-sync', function() {
 
 gulp.task('sass', function() {
 	return gulp.src('app/sass/**/*.sass')
-	.pipe(sass().on("error", notify.onError()))
+	.pipe(sass({outputStyle: 'expand'}).on("error", notify.onError()))
 	.pipe(rename({suffix: '.min', prefix : ''}))
 	.pipe(autoprefixer(['last 15 versions']))
-	.pipe(cleanCSS())
+	.pipe(cleanCSS()) // Опционально, закомментировать при отладке
 	.pipe(gulp.dest('app/css'))
 	.pipe(browserSync.reload({stream: true}));
 });
@@ -106,6 +107,18 @@ gulp.task('deploy', function() {
 	return gulp.src(globs, {buffer: false})
 	.pipe(conn.dest('/path/to/folder/on/server'));
 
+});
+
+gulp.task('rsync', function() {
+	return gulp.src('dist/**')
+	.pipe(rsync({
+		root: 'dist/',
+		hostname: 'username@yousite.com',
+		destination: 'yousite/public_html/',
+		archive: true,
+		silent: false,
+		compress: true
+	}));
 });
 
 gulp.task('removedist', function() { return del.sync('dist'); });
